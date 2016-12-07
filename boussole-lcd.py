@@ -51,7 +51,7 @@ INCLINAISON=bytearray([0x8C])  # 8C = 14.0degree de correction
 SET_INCLINAISON=bytearray([0x03,0x00,0x04,0x8C])
 END_CAL=bytearray([0xC1])
 
-lcd.message('Antenne compass\n VE2VAX  V1.4')
+lcd.message('Antenne compass\n VE2VAX  V1.5')
 
 
 def run_cmd(cmd):
@@ -75,43 +75,48 @@ while t !=0:
   lcd.message(datetime.now().strftime(' %H:%M:%S \n'))
   t = t - 1
   time.sleep (1)
-
 ser.write(END_CAL)
 lcd.clear()
 lcd.home()
 lcd.message('Fin Calibration\n')
 time.sleep(1)
-
 lcd.clear()
 lcd.home()
-
+ser.flush()
 ser.close()
 time.sleep(0.5)
 
 ser.open()
+ser.isOpen()
+ser.write(R_BOUSSOLE)
+time.sleep(0.02)
+while ser.inWaiting() > 0:
+    out += ser.read(1)
+    time.sleep(0.02)
+#
+out = ''
 while x !=0:
   ser.isOpen()
-  out = ''
   ser.write(R_BOUSSOLE)
-  time.sleep(0.05)
+  time.sleep(0.02)
+  out=''
   while ser.inWaiting() > 0:
-    out += ser.read(1)
-    time.sleep(0.04)
-
-    #if out != '':
-       #print ">>" + out
-
+      out += ser.read(1)
+      time.sleep(0.02)
   #x = x -1
-  # remove first caracters
-  out = out[1:]
-  out = out[1:]
-  ##remove extra  caracters
-  #print(out)
-  out = out[:-2]
-  out = out[:-1]
-  #print(out)
-  #out1 = out[:-2]
+  #enleve les linefeed(\n) lf , ^L et les CR ^M
+  # et convert out en integer
+  #enleve  dernier caractere de la string et le point decimal
+  out=out[:-1]
+  out=out[:-1]
+  out=out[:-1]
+  out.lstrip('\n')
+  out.rstrip('\n')
+  out.lstrip('\r')
+  out.rstrip('\r')
   out_int=int(out)
+  out=str(out_int)
+  lcd.home()
   lcd.message(out)
   lcd.message(degree)
   if out_int  <  30:
@@ -138,38 +143,41 @@ while x !=0:
   lcd.message(dir)
   lcd.message(' Bearing ')
   lcd.message('\n')
-  ser.close()
-  ser.open()
   outtemp = ''
   ser.write(TEMP)
-  time.sleep(0.04)
+  time.sleep(0.02)
+  outtemp=''
   while ser.inWaiting() > 0:
-    outtemp += ser.read(1)
-    time.sleep(0.04)
-    # remove first scaracters
-  outtemp = outtemp[1:]
-  outtemp = outtemp[1:]
-  #print(outtemp)
-  ## remove  caracters keep only the first
-  outtemp1 = outtemp[:1]
-  #outtemp1 = outtemp[-4:]
-  #print(outtemp)
-  #print(outtemp1)
-  ##
-  outtemp2=outtemp[1:-1]
-  #print(outtemp2)
-  #print(outtemp1)
-  quatre='4'
+     outtemp += ser.read(1)
+     time.sleep(0.02)
+  #enleve CR & LF
+  outtemp.lstrip('\r')
+  outtemp.lstrip('\n')
+  outtemp.rstrip('\r')
+  outtemp.rstrip('\n')
+  #enleve dernier caractere de la string
+  outtemp=outtemp[:-1]
+  outtemp=outtemp[:-1]
+  outtemp=outtemp[:-1]
+  #convert outtemp en integer avec floating point
+  outtemp_flint=int(float(outtemp))
+  if outtemp_flint >= 400:
+      tmp2=outtemp_flint-400
+      tmp2=int(tmp2/4)
+      tmp2=str(tmp2)
+  else:
+      tmp2=str(outtemp_flint)
   sequence = sequence +1
-  if outtemp1 == quatre:
+  # si outtemp >=400 , la temperature est negative (sous zero)
+  if outtemp_flint >= 400:
      if sequence > 10:
          lcd.message('\n')
          lcd.message(datetime.now().strftime('   %H:%M:%S        \n'))
          lcd.home()
-
-     lcd.message('\n')
-     lcd.message('-' + outtemp2 + (degree) + 'C Temp.Ext. ')
-     lcd.home()
+     else:
+         lcd.message('\n')
+         lcd.message('-' + tmp2 + (degree) + 'C Temp.Ext. ')
+         lcd.home()
   else:
      if sequence > 10:
         lcd.message('\n')
@@ -177,10 +185,11 @@ while x !=0:
         lcd.home()
      else:
         lcd.message('\n')
-        lcd.message('+' + outtemp2 + (degree) + 'C Temp.Ext. ')
+        lcd.message('+' + tmp2 + (degree) + 'C Temp.Ext. ')
         lcd.home()
   if sequence == 20:
      sequence = 0
 x = x - 1
 ser.close()
 exit()
+
