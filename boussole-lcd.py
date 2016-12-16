@@ -53,11 +53,27 @@ END_CAL=bytearray([0xC1])
 
 lcd.message('Antenne compass\n VE2VAX  V1.5')
 
-
+#
 def run_cmd(cmd):
     p = Popen(cmd, shell=True, stdout=PIPE)
     output = p.communicate()[0]
     return output
+#
+def serial_ask(R):
+    global out
+    ser.write(R)
+    time.sleep(0.02)
+    while ser.inWaiting() > 0:
+       out += ser.read(1)
+       time.sleep(0.02)
+    return out
+#
+def clear_out():
+    global out
+    out = ''
+    return out
+#
+
 time.sleep(1)
 ipaddr = run_cmd(cmd)
 lcd.home()
@@ -67,6 +83,8 @@ lcd.clear()
 lcd.home()
 
 #ser.write(START_CAL)
+if(ser.isOpen() == False):
+    ser.open()
 ser.write(SET_INCLINAISON)
 while t !=0:
   lcd.home()
@@ -75,7 +93,7 @@ while t !=0:
   lcd.message(datetime.now().strftime(' %H:%M:%S \n'))
   t = t - 1
   time.sleep (1)
-ser.write(END_CAL)
+#ser.write(END_CAL)
 lcd.clear()
 lcd.home()
 lcd.message('Fin Calibration\n')
@@ -83,27 +101,16 @@ time.sleep(1)
 lcd.clear()
 lcd.home()
 ser.flush()
-ser.close()
 time.sleep(0.5)
 
-ser.open()
-ser.isOpen()
-ser.write(R_BOUSSOLE)
-time.sleep(0.02)
-while ser.inWaiting() > 0:
-    out += ser.read(1)
-    time.sleep(0.02)
+clear_out()
+out = serial_ask(R_BOUSSOLE)
 #
-out = ''
 while x !=0:
-  ser.isOpen()
-  ser.write(R_BOUSSOLE)
-  time.sleep(0.02)
-  out=''
-  while ser.inWaiting() > 0:
-      out += ser.read(1)
-      time.sleep(0.02)
-  #x = x -1
+  clear_out()
+  out = serial_ask(R_BOUSSOLE)
+
+#x = x -1
   #enleve les linefeed(\n) lf , ^L et les CR ^M
   # et convert out en integer
   #enleve  dernier caractere de la string et le point decimal
@@ -143,27 +150,25 @@ while x !=0:
   lcd.message(dir)
   lcd.message(' Bearing ')
   lcd.message('\n')
-  outtemp = ''
-  ser.write(TEMP)
-  time.sleep(0.02)
-  outtemp=''
-  while ser.inWaiting() > 0:
-     outtemp += ser.read(1)
-     time.sleep(0.02)
+  clear_out()
+  outtemp = serial_ask(TEMP)
   #enleve CR & LF
-  outtemp.lstrip('\r')
   outtemp.lstrip('\n')
-  outtemp.rstrip('\r')
   outtemp.rstrip('\n')
+  outtemp.lstrip('\r')
+  outtemp.rstrip('\r')
   #enleve dernier caractere de la string
   outtemp=outtemp[:-1]
   outtemp=outtemp[:-1]
   outtemp=outtemp[:-1]
   #convert outtemp en integer avec floating point
+  #print outtemp
   outtemp_flint=int(float(outtemp))
+  #outtemp_flint=int(outtemp)
+  #print outtemp_flint
   if outtemp_flint >= 400:
       tmp2=outtemp_flint-400
-      tmp2=int(tmp2/4)
+      tmp2=int(tmp2/1.4)
       tmp2=str(tmp2)
   else:
       tmp2=str(outtemp_flint)
@@ -192,4 +197,3 @@ while x !=0:
 x = x - 1
 ser.close()
 exit()
-
