@@ -47,7 +47,8 @@ RESET_FACT=bytearray([0xA0,0xAA,0xA5,0xC5])
 TEMP=bytearray([0x35])
 R_BOUSSOLE=bytearray([0x31])
 START_CAL=bytearray([0xC0])
-INCLINAISON=bytearray([0x8C])  # 8C = 14.0degree de correction
+INCLINAISON=bytearray([0x8C])  # 8C = 14.0degree de correction  example: if you inclinaison is  +14 Degree ,as it is in Quebec ,
+# the last  byte of SET_INCLINAISON will be  ( 0x80 + 14 ) = 0x8C 
 SET_INCLINAISON=bytearray([0x03,0x00,0x04,0x8C])
 END_CAL=bytearray([0xC1])
 
