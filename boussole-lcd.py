@@ -1,6 +1,6 @@
 #!/usr/bin/python
-# Normand Labossiere VE2VAX /VA2NQ bousole antenne system
-# avec  sonde de temperature
+# Normand Labossiere VE2VAX /VA2NQ gy-26 compass antenna system
+# with temperature sensor 
 # Calibrate GY-26 I2C Compass
 # Default address 0x70
 #!/usr/bin/python
